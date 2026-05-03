@@ -1,0 +1,650 @@
+<h1>Admin Dashboard</h1>
+
+<div class="hero">Smart Attendance System</div>
+
+<style>
+body {
+    font-family: 'Poppins', sans-serif;
+    background: #f7f3ef;
+    margin: 0;
+}
+
+h1 {
+    text-align: center;
+    padding: 20px;
+    color: #3e2c23;
+}
+
+.navbar {
+    display: flex;
+    justify-content: center;
+    gap: 20px;
+    padding: 15px;
+    background: #e6d3c3;
+    border-radius: 0 0 20px 20px;
+}
+
+.navbar button {
+    background: #fff;
+    border: none;
+    padding: 8px 16px;
+    border-radius: 20px;
+    font-weight: 600;
+    cursor: pointer;
+    color: #3e2c23;
+    transition: 0.3s;
+}
+
+.navbar button:hover {
+    background: #6f4e37;
+    color: white;
+}
+
+.hero {
+    background: linear-gradient(135deg, #6f4e37, #a67c52);
+    height: 180px;
+    border-radius: 20px;
+    margin: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 26px;
+    font-weight: 600;
+    letter-spacing: 1px;
+}
+
+.section {
+    background: white;
+    margin: 20px auto;
+    padding: 20px;
+    border-radius: 20px;
+    width: 90%;
+    box-shadow: 0 8px 20px rgba(0,0,0,0.1);
+}
+
+.card-container {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 15px;
+}
+
+.card {
+    padding: 25px;
+    border-radius: 15px;
+    background: #ffffff;
+    text-align: center;
+    box-shadow: 0 6px 15px rgba(0,0,0,0.08);
+    transition: 0.3s ease;
+}
+
+.card h4 {
+    color: #6f4e37;
+    margin-bottom: 10px;
+}
+
+.card p {
+    font-size: 22px;
+    font-weight: 600;
+    color: #333;
+}
+
+button {
+    padding: 10px 16px;
+    border-radius: 10px;
+    border: none;
+    background: #6f4e37;
+    color: white;
+    cursor: pointer;
+    font-weight: 500;
+    transition: 0.3s ease;
+}
+
+button:hover {
+    background: #4e342e;
+}
+
+#attendanceTable {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 20px;
+    border-radius: 12px;
+    overflow: hidden;
+    background: white;
+}
+
+#attendanceTable th {
+    background: #6f4e37;
+    color: white;
+    padding: 10px;
+}
+
+#attendanceTable td {
+    padding: 10px;
+    text-align: center;
+}
+
+#attendanceTable tr:nth-child(even) {
+    background: #f9f6f3;
+}
+
+.logout-btn {
+    background: #6f4e37;
+    color: white;
+    padding: 8px 16px;
+    border-radius: 20px;
+    text-decoration: none;
+    font-weight: 500;
+    transition: 0.3s;
+}
+
+.logout-btn:hover {
+    background: #4e342e;
+}
+</style>
+
+<div style="display:flex; justify-content:flex-end; padding:10px 20px;">
+    <a href="/logout/" class="logout-btn">Logout</a>
+</div>
+
+<div class="navbar">
+    <button onclick="showSection('register')">👤 Register User</button>
+    <button onclick="showSection('attendance')">📊 View Attendance</button>
+    <button onclick="showSection('analytics')">📈 Analytics</button>
+</div>
+
+<div id="registerSection" class="section" style="display:none;">
+    <h3>Register New User</h3>
+    <input type="text" id="username" placeholder="Enter name">
+    <video id="video" width="300" height="200" autoplay style="display:none; margin-top:10px;"></video>
+    <button onclick="registerUser()">Register</button>
+</div>
+
+<div id="attendanceSection" class="section" style="display:none;">
+    <h3 style="text-align:center; color:#6f4e37; font-size:22px;">Attendance Overview</h3>
+
+    
+
+    <div id="subjectCards" class="card-container" style="margin-top:20px;"></div>
+
+    <a href="/download/">
+        <button style="background:#007bff; color:white;">Download CSV</button>
+    </a>
+
+    <div style="margin:15px 0; text-align:center;">
+        <input type="date" id="filterDate">
+        
+        <select id="filterSubject" style="padding:6px; margin-left:10px;">
+            <option value="">All Subjects</option>
+            <option value="Math">Math</option>
+            <option value="Physics">Physics</option>
+            <option value="Chemistry">Chemistry</option>
+            <option value="DBMS">DBMS</option>
+        </select>
+        <select id="filterStudent" style="padding:6px; margin-left:10px;">
+            <option value="">All Students</option>
+        </select>
+
+        <button onclick="applyFilter()">Filter</button>
+        <button onclick="resetFilters()">Reset</button>
+    </div>
+
+    <table border="1" id="attendanceTable" style="width:100%;">
+        <thead>
+            <tr>
+                <th>Name</th>
+                <th>Subject</th>
+                <th>Time</th>
+                <th>Status</th>
+                <th>Action</th>
+            </tr>
+        </thead>
+        <tbody></tbody>
+    </table>
+
+</div>
+
+<div id="analyticsSection" class="section" style="display:none;">
+    <h3>📈 Analytics</h3>
+
+    <div class="card-container">
+        <div class="card">
+            <h4>Today Present</h4>
+            <p id="presentToday">0</p>
+        </div>
+
+        <div class="card">
+            <h4>Today Absent</h4>
+            <p id="absentToday">0</p>
+        </div>
+
+        <div class="card">
+            <h4>Today's Attendance</h4>
+            <p id="todayCount">0</p>
+        </div>
+
+        <div class="card">
+            <h4>Most Active User</h4>
+            <p id="activeUser">-</p>
+        </div>
+    </div>
+
+    <div id="subjectCards" class="card" style="margin-top:20px;"></div>
+
+    <div id="monthlyData" style="margin-top:20px;"></div>
+    <div id="studentData"></div>
+
+    <canvas id="analyticsChart" style="margin-top:20px;"></canvas>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<script>
+const video = document.getElementById('video');
+let currentStream = null;
+
+function startCamera() {
+    navigator.mediaDevices.getUserMedia({ video: true })
+        .then(stream => {
+            currentStream = stream;
+            video.srcObject = stream;
+        })
+        .catch(err => alert("Camera not working"));
+}
+
+function stopCamera() {
+    if (currentStream) {
+        currentStream.getTracks().forEach(track => track.stop());
+        currentStream = null;
+        video.srcObject = null;
+    }
+}
+
+function loadAnalytics() {
+    fetch('/attendance/')
+    .then(res => res.json())
+    .then(response => {
+        const data = response.data;
+
+        // Cards
+        document.getElementById("presentToday").innerText = response.today_present;
+        document.getElementById("absentToday").innerText = response.today_absent;
+
+        renderMonthly(response.monthly_percentage);
+        renderStudentSummary(response.student_summary);
+
+        updateSummary(data);
+        renderChart(data);
+        renderSubjectCards(data);
+    });
+}
+
+function loadAttendanceTable() {
+    fetch('/attendance/')
+    .then(res => res.json())
+    .then(response => {
+        const data = response.data;
+
+        const table = document.querySelector("#attendanceTable tbody");
+        table.innerHTML = "";
+
+        data.forEach(row => {
+            table.innerHTML += `
+                <tr>
+                    <td>${row.name}</td>
+                    <td>${row.subject || '-'}</td>
+                    <td>${formatTime(row.time)}</td>
+                    <td>${row.status}</td>
+                    <td><button onclick="deleteRecord(${row.id})">Delete</button></td>
+                </tr>
+            `;
+        });
+
+        // Fill student dropdown
+        const studentSelect = document.getElementById("filterStudent");
+        if (studentSelect) {
+            const uniqueStudents = [...new Set(data.map(d => d.name))];
+
+            studentSelect.innerHTML = '<option value="">All Students</option>';
+            uniqueStudents.forEach(name => {
+                studentSelect.innerHTML += `<option value="${name}">${name}</option>`;
+            });
+        }
+    });
+}
+
+function registerUser() {
+    const name = document.getElementById("username").value.trim().toLowerCase();
+
+    if (!name) {
+        alert("Enter name first");
+        return;
+    }
+
+    // Camera validation
+    if (!video.srcObject) {
+        alert("⚠️ Camera is not started. Click Register section again.");
+        return;
+    }
+
+    let canvas = document.createElement('canvas');
+    canvas.width = video.videoWidth;
+    canvas.height = video.videoHeight;
+
+    let ctx = canvas.getContext('2d');
+    ctx.drawImage(video, 0, 0);
+
+    let imageData = canvas.toDataURL('image/jpeg').split(',')[1];
+
+    fetch('/register/', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/x-www-form-urlencoded'
+        },
+        body: new URLSearchParams({
+            name: name,
+            image: imageData
+        })
+    })
+    .then(res => {
+        if (!res.ok) {
+            throw new Error("Server error: " + res.status);
+        }
+        return res.json();
+    })
+    .then(data => {
+        const message = data.message || "";
+
+        if (message.toLowerCase().includes("success")) {
+            alert("✅ You are registered successfully!");
+        } else if (message) {
+            alert("⚠️ " + message);
+        } else {
+            alert("⚠️ Registration failed. No response from server.");
+        }
+
+        document.getElementById("username").value = "";
+    })
+    .catch(err => {
+        console.error("Register Error:", err);
+        alert("❌ Registration failed. Please try again.");
+    });
+}
+
+function loadAttendance() {
+    fetch('/attendance/')
+    .then(res => res.json())
+    .then(response => {
+        const data = response.data;
+
+        const studentSelect = document.getElementById("filterStudent");
+        if (studentSelect) {
+            const uniqueStudents = [...new Set(data.map(d => d.name))];
+            
+            studentSelect.innerHTML = '<option value="">All Students</option>';
+            uniqueStudents.forEach(name => {
+                studentSelect.innerHTML += `<option value="${name}">${name}</option>`;
+            });
+        }
+    
+        // ✅ NEW ANALYTICS
+        document.getElementById("presentToday").innerText = response.today_present;
+        document.getElementById("absentToday").innerText = response.today_absent;
+
+        renderMonthly(response.monthly_percentage);
+        renderStudentSummary(response.student_summary);
+    
+        updateSummary(data);
+        renderChart(data);
+        renderSubjectCards(data);
+    });
+}
+
+function renderMonthly(data) {
+    let html = "";
+
+    for (let student in data) {
+        html += `<p>${student}: ${data[student]}%</p>`;
+    }
+
+    document.getElementById("monthlyData").innerHTML = html;
+}
+
+function renderStudentSummary(data) {
+    let html = "";
+
+    for (let student in data) {
+        html += `<p>${student}: ${data[student]} records</p>`;
+    }
+
+    document.getElementById("studentData").innerHTML = html;
+}
+
+function updateSummary(data) {
+    // Only update NEW analytics
+    fetch('/attendance/')
+    .then(res => res.json())
+    .then(apiData => {
+        document.getElementById('presentToday').innerText = apiData.today_present;
+        document.getElementById('absentToday').innerText = apiData.today_absent;
+    });
+
+    // 🟡 Today's Attendance
+    const today = new Date().toISOString().split('T')[0];
+    let todayCount = data.filter(d => d.time.startsWith(today)).length;
+    document.getElementById('todayCount').innerText = todayCount;
+
+    // 🧑 Most Active User
+    const countMap = {};
+    data.forEach(item => {
+        countMap[item.name] = (countMap[item.name] || 0) + 1;
+    });
+
+    let maxUser = '-';
+    let maxCount = 0;
+
+    for (let user in countMap) {
+        if (countMap[user] > maxCount) {
+            maxCount = countMap[user];
+            maxUser = user;
+        }
+    }
+
+    document.getElementById('activeUser').innerText = maxUser + " (" + maxCount + ")";
+}
+
+function applyFilter() {
+    const selectedDate = document.getElementById('filterDate').value;
+    const selectedSubject = document.getElementById('filterSubject').value;
+    const selectedStudent = document.getElementById('filterStudent')?.value;
+
+    fetch('/attendance/')
+    .then(res => res.json())
+    .then(response => {
+        let filtered = response.data;
+
+        if (selectedDate) {
+            filtered = filtered.filter(item => item.time.startsWith(selectedDate));
+        }
+
+        if (selectedSubject) {
+            filtered = filtered.filter(item => item.subject === selectedSubject);
+        }
+
+        if (selectedStudent) {
+            filtered = filtered.filter(item => item.name === selectedStudent);
+        }
+
+        loadFiltered(filtered);
+    });
+}
+
+function resetFilters() {
+    // Clear filters
+    document.getElementById('filterDate').value = "";
+    document.getElementById('filterSubject').value = "";
+    const studentSelect = document.getElementById('filterStudent');
+    if (studentSelect) studentSelect.value = "";
+
+    // Reload full data
+    loadAttendance();
+    loadAttendanceTable();
+}
+
+function loadFiltered(data) {
+    const table = document.querySelector("#attendanceTable tbody");
+    table.innerHTML = "";
+
+    data.forEach(row => {
+        table.innerHTML += `
+            <tr>
+                <td>${row.name}</td>
+                <td>${row.subject || '-'}</td>
+                <td>${formatTime(row.time)}</td>
+                <td>${row.status}</td>
+                <td><button onclick="deleteRecord(${row.id})" style="background:#e53935;">Delete</button></td>
+            </tr>
+        `;
+    });
+
+    updateSummary(data);
+    renderChart(data);
+    renderSubjectCards(data);
+}
+
+function renderSubjectCards(data) {
+    const container = document.getElementById("subjectCards");
+    container.innerHTML = "";
+
+    const subjectMap = {};
+
+    data.forEach(item => {
+        const subject = item.subject || "Unknown";
+        subjectMap[subject] = (subjectMap[subject] || 0) + 1;
+    });
+
+    for (let subject in subjectMap) {
+        container.innerHTML += `
+            <div class="card cyan">
+                <h4>${subject}</h4>
+                <p>${subjectMap[subject]}</p>
+            </div>
+        `;
+    }
+}
+
+function renderChart(data) {
+    const chartId = 'analyticsChart';
+
+    const ctx = document.getElementById(chartId).getContext('2d');
+
+    // 🎯 Subject-wise aggregation
+    const subjectMap = {};
+
+    data.forEach(item => {
+        const subject = item.subject || "Unknown";
+        subjectMap[subject] = (subjectMap[subject] || 0) + 1;
+    });
+
+    const subjects = Object.keys(subjectMap);
+    const values = subjects.map(s => subjectMap[s]);
+
+    if (window.chart) window.chart.destroy();
+
+    window.chart = new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: subjects,
+            datasets: [{
+                label: 'Subject-wise Attendance',
+                data: values,
+                backgroundColor: '#667eea'
+            }]
+        },
+        options: {
+            plugins: {
+                legend: {
+                    display: true
+                }
+            }
+        }
+    });
+}
+
+function formatTime(datetime) {
+    const date = new Date(datetime);
+
+    let hours = date.getHours();
+    let minutes = date.getMinutes();
+    let seconds = date.getSeconds();
+
+    const ampm = hours >= 12 ? 'PM' : 'AM';
+
+    hours = hours % 12;
+    hours = hours ? hours : 12; // 0 -> 12
+
+    minutes = minutes < 10 ? '0' + minutes : minutes;
+    seconds = seconds < 10 ? '0' + seconds : seconds;
+
+    const formattedDate = date.toLocaleDateString('en-US');
+    return `${formattedDate} ${hours}:${minutes}:${seconds} ${ampm}`;
+}
+
+function showSection(section) {
+    document.getElementById("registerSection").style.display = "none";
+    document.getElementById("attendanceSection").style.display = "none";
+    document.getElementById("analyticsSection").style.display = "none";
+
+    document.getElementById("video").style.display = "none";
+    stopCamera(); // stop camera when switching sections
+
+    if (section === "register") {
+        document.getElementById("registerSection").style.display = "block";
+        document.getElementById("video").style.display = "block";
+        startCamera();
+    }
+
+    else if (section === "attendance") {
+        document.getElementById("attendanceSection").style.display = "block";
+        loadAttendance();
+        loadAttendanceTable();
+    }
+
+    else if (section === "analytics") {
+        document.getElementById("analyticsSection").style.display = "block";
+        loadAnalytics();
+    }
+}
+
+function deleteRecord(id) {
+    if (!confirm("Delete this record?")) return;
+
+    fetch('/delete-attendance/', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ id: id })
+    })
+    .then(res => res.json())
+    .then(data => {
+        alert(data.message);
+
+        // ✅ Instantly remove row from UI without refresh
+        const button = document.querySelector(`button[onclick="deleteRecord(${id})"]`);
+        if (button) {
+            const row = button.closest('tr');
+            if (row) row.remove();
+        }
+
+        // ✅ Also refresh counts & analytics
+        loadAttendance();
+        loadAttendanceTable();
+    })
+    .catch(err => {
+        console.error("Delete Error:", err);
+        alert("❌ Failed to delete record");
+    });
+}
+
+</script>

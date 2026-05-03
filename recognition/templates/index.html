@@ -1,0 +1,303 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Face Attendance System</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        body {
+            font-family: 'Segoe UI', sans-serif;
+            background: #f4f6f9;
+            margin: 0;
+        }
+
+        .container {
+            max-width: 1000px;
+            margin: 30px auto;
+            background: white;
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+        }
+
+        h1 {
+            text-align: center;
+            color: #333;
+        }
+
+        video {
+            display: block;
+            margin: auto;
+            border-radius: 10px;
+            border: 3px solid #ddd;
+        }
+
+        .btn-group {
+            text-align: center;
+            margin-top: 10px;
+        }
+
+        button {
+            padding: 10px 18px;
+            margin: 5px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: bold;
+        }
+
+        .btn-in { background: #28a745; color: white; }
+        .btn-out { background: #dc3545; color: white; }
+        .btn-download { background: #007bff; color: white; }
+
+        input {
+            padding: 8px;
+            border-radius: 5px;
+            border: 1px solid #ccc;
+        }
+
+        .section { margin-top: 25px; }
+
+        .result {
+            font-size: 18px;
+            font-weight: bold;
+            text-align: center;
+            margin-top: 10px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 10px;
+        }
+
+        th, td {
+            padding: 10px;
+            border-bottom: 1px solid #ddd;
+            text-align: center;
+        }
+
+        th {
+            background: #007bff;
+            color: white;
+        }
+    </style>
+</head>
+
+<body>
+
+<div class="container">
+<a href="/accounts/login/">
+    <button style="position:absolute; top:20px; right:20px;">
+        Admin Login
+    </button>
+</a>
+
+<h1>🎯 Face Attendance System</h1>
+
+<video id="video" width="600" height="400" autoplay></video>
+
+<div class="btn-group">
+    <select id="subject">
+        <option value="Math">Math</option>
+        <option value="Physics">Physics</option>
+        <option value="Chemistry">Chemistry</option>
+        <option value="DBMS">DBMS</option>
+        
+    </select>
+    <br><br>
+    <button class="btn-in" onclick="capture()">Check In</button>
+</div>
+<p id="resultMsg" style="margin-top:15px; font-weight:bold; text-align:center;"></p>
+
+
+<div id="result" class="result"></div>
+
+</div>
+
+<script>
+const video = document.getElementById('video');
+let isChecking = false;
+
+async function startCamera() {
+    try {
+        const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+        video.srcObject = stream;
+    } catch (err) {
+        alert("Camera not working");
+    }
+}
+
+startCamera();
+
+function capture() {
+    if (isChecking) return;
+    isChecking = true;
+
+    let canvas = document.createElement('canvas');
+    canvas.width = video.videoWidth;
+    canvas.height = video.videoHeight;
+
+    let ctx = canvas.getContext('2d');
+    ctx.drawImage(video, 0, 0);
+
+    let data = canvas.toDataURL('image/jpeg').split(',')[1];
+
+    let subject = document.getElementById("subject").value;
+
+    fetch('/recognize/', {
+        method: 'POST',
+        body: new URLSearchParams({
+            image: data,
+            subject: subject
+        })
+    })
+    .then(res => res.json())
+    .then(data => {
+        const msg = document.getElementById("resultMsg");
+
+        if (data.status === "failed") {
+            msg.innerHTML = `<div style="color:red; font-weight:600;">${data.message || "Face not recognized"}</div>`;
+        } else if (data.message) {
+            let cleanMessage = data.message;
+
+            cleanMessage = cleanMessage.charAt(0).toUpperCase() + cleanMessage.slice(1);
+
+            const subject = document.getElementById("subject").value;
+
+            msg.innerHTML = `
+                <div style="font-size:18px; font-weight:600; color:green;">
+                    ✔ ${cleanMessage}
+                </div>
+                <div style="font-size:14px; color:#555; margin-top:5px;">
+                    Subject: <b>${subject}</b>
+                </div>
+            `;
+        } else {
+            msg.innerHTML = `<div style="color:red; font-weight:600;">Unknown response</div>`;
+        }
+
+        loadAttendance();
+        isChecking = false;
+    })
+    .catch(() => {
+        isChecking = false;
+    });
+}
+
+function loadAttendance() {
+    fetch('/attendance/')
+    .then(res => res.json())
+    .then(data => {
+        // Calculate unique present users
+        let inside = new Set(data.map(d => d.name)).size;
+        const insideEl = document.getElementById("insideCount");
+        if (insideEl) {
+            insideEl.innerText = inside;
+        }
+
+        const tableBody = document.querySelector('#attendanceTable tbody');
+        tableBody.innerHTML = '';
+
+        data.forEach(item => {
+            tableBody.innerHTML += `<tr>
+                <td>${item.name}</td>
+                <td>${item.time}</td>
+                <td>${item.status}</td>
+            </tr>`;
+        });
+        renderChart(data);
+    });
+}
+
+function registerUser() {
+    const name = document.getElementById("username").value;
+
+    if (!name) {
+        alert("Enter name first");
+        return;
+    }
+
+    let canvas = document.createElement('canvas');
+    canvas.width = video.videoWidth;
+    canvas.height = video.videoHeight;
+
+    let ctx = canvas.getContext('2d');
+    ctx.drawImage(video, 0, 0);
+
+    let data = canvas.toDataURL('image/jpeg').split(',')[1];
+
+    fetch('/register/', {
+        method: 'POST',
+        body: new URLSearchParams({ image: data, name: name })
+    })
+    .then(res => res.json())
+    .then(data => alert(data.message));
+}
+
+loadAttendance();
+
+function applyFilter() {
+    const selectedDate = document.getElementById('filterDate').value;
+
+    fetch('/attendance/')
+    .then(res => res.json())
+    .then(data => {
+        if (!selectedDate) {
+            renderFiltered(data);
+            return;
+        }
+
+        const filtered = data.filter(item => {
+            return item.time.startsWith(selectedDate);
+        });
+
+        renderFiltered(filtered);
+    });
+}
+
+function renderFiltered(data) {
+    const tableBody = document.querySelector('#attendanceTable tbody');
+    tableBody.innerHTML = '';
+
+    data.forEach(item => {
+        tableBody.innerHTML += `<tr>
+            <td>${item.name}</td>
+            <td>${item.time}</td>
+            <td>${item.status}</td>
+        </tr>`;
+    });
+
+    renderChart(data);
+}
+
+function renderChart(data) {
+    const ctx = document.getElementById('attendanceChart').getContext('2d');
+
+    const countMap = {};
+
+    data.forEach(item => {
+        countMap[item.name] = (countMap[item.name] || 0) + 1;
+    });
+
+    const labels = Object.keys(countMap);
+    const values = Object.values(countMap);
+
+    if (window.chart) {
+        window.chart.destroy();
+    }
+
+    window.chart = new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: labels,
+            datasets: [{
+                label: 'Attendance Count',
+                data: values
+            }]
+        }
+    });
+}
+</script>
+
+</body>
+</html>

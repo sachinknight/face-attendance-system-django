@@ -1,0 +1,19 @@
+# Virtual Environment
+venv/
+env/
+
+# Python
+__pycache__/
+*.pyc
+
+# Django
+db.sqlite3
+/media/
+staticfiles/
+
+# Face Recognition Data
+ImagesAttendance/
+
+# OS files
+.DS_Store
+
